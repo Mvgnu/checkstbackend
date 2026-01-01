@@ -4,10 +4,10 @@ After=network.target
 
 [Service]
 Type=simple
-User=www-data
-Group=www-data
-WorkingDirectory=/opt/openanki
-ExecStart=/opt/openanki/server
+User=ploi
+Group=ploi
+WorkingDirectory=/home/ploi/checkst.app/checkstbackend
+ExecStart=/home/ploi/checkst.app/checkstbackend/server
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -18,9 +18,9 @@ Environment=PORT=8080
 
 # Security hardening
 NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/opt/openanki/data
+ProtectSystem=full
+ProtectHome=false
+ReadWritePaths=/home/ploi/checkst.app/checkstbackend/data
 
 [Install]
 WantedBy=multi-user.target

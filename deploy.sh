@@ -5,7 +5,7 @@
 set -e
 
 # Configuration
-APP_DIR="/opt/openanki"
+APP_DIR="/home/ploi/checkst.app/checkstbackend"
 SERVICE_NAME="openanki"
 REPO_URL="https://github.com/Mvgnu/checkstbackend.git"
 BRANCH="main"
