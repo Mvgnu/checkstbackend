@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAnki - Intelligentes Lernen mit Karteikarten</title>
+    <meta name="description" content="OpenAnki ist die moderne Karteikarten-App mit KI-Unterstützung und wissenschaftlich fundierter Spaced Repetition.">
+    <style>
+        :root {
+            --bg-dark: #0F0F23;
+            --bg-card: #16213E;
+            --accent: #E94560;
+            --accent-green: #4ECCA3;
+            --text: #FFFFFF;
+            --text-muted: rgba(255,255,255,0.7);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        
+        /* Header */
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 24px;
+            transition: color 0.2s;
+        }
+        nav a:hover { color: var(--text); }
+        
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 100px 0;
+        }
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 20px;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+        .app-badges { display: flex; justify-content: center; gap: 16px; }
+        .app-badge {
+            background: var(--bg-card);
+            padding: 12px 24px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text);
+            transition: transform 0.2s;
+        }
+        .app-badge:hover { transform: translateY(-2px); }
+        .app-badge svg { width: 32px; height: 32px; }
+        
+        /* Features */
+        .features {
+            padding: 80px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+        .feature {
+            background: var(--bg-card);
+            padding: 32px;
+            border-radius: 16px;
+        }
+        .feature h3 {
+            color: var(--accent-green);
+            margin-bottom: 12px;
+        }
+        .feature p { color: var(--text-muted); }
+        
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .footer-links a:hover { color: var(--text); }
+        .copyright {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">OpenAnki</div>
+            <nav>
+                <a href="#features">Features</a>
+                <a href="/agb.html">AGB</a>
+                <a href="/datenschutz.html">Datenschutz</a>
+                <a href="/impressum.html">Impressum</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Intelligentes Lernen mit Karteikarten</h1>
+                <p>OpenAnki nutzt wissenschaftlich fundierte Spaced Repetition und KI-Unterstützung, um dein Lernen effizienter zu gestalten.</p>
+                <div class="app-badges">
+                    <a href="https://apps.apple.com/app/openanki" class="app-badge">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                        <div>
+                            <div style="font-size:12px;opacity:0.7">Download on the</div>
+                            <div style="font-weight:600">App Store</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="container">
+            <div class="features">
+                <div class="feature">
+                    <h3>🧠 Spaced Repetition</h3>
+                    <p>FSRS-Algorithmus optimiert deine Wiederholungen basierend auf wissenschaftlichen Erkenntnissen zur Gedächtnisbildung.</p>
+                </div>
+                <div class="feature">
+                    <h3>🤖 KI-Unterstützung</h3>
+                    <p>Generiere Karteikarten automatisch aus Texten, PDFs oder Bildern mit integrierter KI-Technologie.</p>
+                </div>
+                <div class="feature">
+                    <h3>☁️ Cloud Sync</h3>
+                    <p>Synchronisiere deine Karteikarten sicher zwischen all deinen Geräten. Lerne überall weiter.</p>
+                </div>
+                <div class="feature">
+                    <h3>📚 Anki-Kompatibel</h3>
+                    <p>Importiere bestehende Anki-Decks (.apkg) und nutze die riesige Community-Bibliothek.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="/agb.html">Allgemeine Geschäftsbedingungen</a>
+                <a href="/datenschutz.html">Datenschutzerklärung</a>
+                <a href="/impressum.html">Impressum</a>
+            </div>
+            <p class="copyright">&copy; 2026 OpenAnki. Alle Rechte vorbehalten.</p>
+        </div>
+    </footer>
+</body>
+</html>

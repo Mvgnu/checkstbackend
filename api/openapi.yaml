@@ -1,0 +1,394 @@
+openapi: 3.0.0
+info:
+  title: OpenAnki Sync API
+  description: API for synchronizing Anki flashcard data
+  version: 1.0.0
+servers:
+  - url: /api/v1
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    SyncMeta:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        usn:
+          type: integer
+        last_sync:
+          type: string
+          format: date-time
+    SyncDeck:
+      type: object
+      required:
+        - id
+        - name
+        - config_id
+        - created_at
+        - modified_at
+        - usn
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        config_id:
+          type: integer
+        created_at:
+          type: integer
+          format: int64
+        modified_at:
+          type: integer
+          format: int64
+        usn:
+          type: integer
+    SyncNote:
+      type: object
+      required:
+        - id
+        - guid
+        - mid
+        - mod
+        - usn
+        - tags
+        - flds
+        - sfld
+        - csum
+        - flags
+        - data
+      properties:
+        id:
+          type: integer
+          format: int64
+        guid:
+          type: string
+        mid:
+          type: integer
+          format: int64
+        mod:
+          type: integer
+          format: int64
+        usn:
+          type: integer
+        tags:
+          type: string
+        flds:
+          type: string
+        sfld:
+          type: string
+        csum:
+          type: integer
+          format: int64
+        flags:
+          type: integer
+        data:
+          type: string
+    SyncCard:
+      type: object
+      required:
+        - id
+        - note_id
+        - deck_id
+        - ordinal
+        - modified_at
+        - usn
+        - state
+        - queue
+        - due
+        - interval
+        - ease_factor
+        - reps
+        - lapses
+        - left_count
+        - original_due
+        - original_deck_id
+        - flags
+        - data
+      properties:
+        id:
+          type: integer
+          format: int64
+        note_id:
+          type: integer
+          format: int64
+        deck_id:
+          type: integer
+          format: int64
+        ordinal:
+          type: integer
+        modified_at:
+          type: integer
+          format: int64
+        usn:
+          type: integer
+        state:
+          type: integer
+        queue:
+          type: integer
+        due:
+          type: integer
+          format: int64
+        interval:
+          type: integer
+        ease_factor:
+          type: integer
+        reps:
+          type: integer
+        lapses:
+          type: integer
+        left_count:
+          type: integer
+        original_due:
+          type: integer
+          format: int64
+        original_deck_id:
+          type: integer
+          format: int64
+        flags:
+          type: integer
+        data:
+          type: string
+        stability:
+          type: number
+          format: double
+        difficulty:
+          type: number
+          format: double
+    SyncGrave:
+      type: object
+      required:
+        - oid
+        - type
+      properties:
+        oid:
+          type: integer
+          format: int64
+        type:
+          type: integer
+          description: "0=card, 1=note, 2=deck"
+    SyncPushRequest:
+      type: object
+      properties:
+        client_usn:
+          type: integer
+        decks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncDeck'
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncNote'
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncCard'
+        graves:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncGrave'
+    SyncPullResponse:
+      type: object
+      properties:
+        server_usn:
+          type: integer
+        decks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncDeck'
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncNote'
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncCard'
+        graves:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncGrave'
+    USNResponse:
+      type: object
+      properties:
+        server_usn:
+          type: integer
+    MediaItem:
+      type: object
+      properties:
+        hash:
+          type: string
+        filename:
+          type: string
+    MediaListResponse:
+      type: object
+      properties:
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaItem'
+    MediaUploadResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        hash:
+          type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /sync/meta:
+    get:
+      summary: Get sync metadata
+      operationId: GetSyncMeta
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncMeta'
+        '500':
+          description: Server error
+
+  /sync/push:
+    post:
+      summary: Push changes to server
+      operationId: PushSync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPushRequest'
+      responses:
+        '200':
+          description: Successful push
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USNResponse'
+        '403':
+          description: Subscription required
+        '500':
+          description: Server error
+
+  /sync/pull:
+    get:
+      summary: Pull changes from server
+      operationId: PullSync
+      parameters:
+        - name: since
+          in: query
+          description: Last known USN
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful pull
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPullResponse'
+        '403':
+          description: Subscription required
+        '500':
+          description: Server error
+
+  /sync/full:
+    post:
+      summary: Full sync (reset and push)
+      operationId: FullSync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPushRequest'
+      responses:
+        '200':
+          description: Successful sync
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USNResponse'
+        '403':
+          description: Subscription required
+        '500':
+          description: Server error
+
+  /sync/media/list:
+    get:
+      summary: List user media files
+      operationId: ListMedia
+      responses:
+        '200':
+          description: List of media files
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaListResponse'
+        '500':
+          description: Server error
+
+  /sync/media/upload:
+    post:
+      summary: Upload media file
+      operationId: UploadMedia
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                hash:
+                  type: string
+              required:
+                - file
+                - hash
+      responses:
+        '200':
+          description: Upload successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaUploadResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Server error
+
+  /sync/media/{hash}:
+    get:
+      summary: Download media file
+      operationId: DownloadMedia
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Media file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Meda not found

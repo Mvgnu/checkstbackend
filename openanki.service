@@ -1,0 +1,26 @@
+[Unit]
+Description=OpenAnki Backend Server
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/openanki
+ExecStart=/opt/openanki/server
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Environment
+Environment=PORT=8080
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/openanki/data
+
+[Install]
+WantedBy=multi-user.target
