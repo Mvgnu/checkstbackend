@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"io"
+    "log"
 	"net/http"
 	"os"
 	"path/filepath"
