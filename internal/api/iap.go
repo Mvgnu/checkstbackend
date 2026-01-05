@@ -98,7 +98,7 @@ func (h *IAPHandler) VerifyPurchase(w http.ResponseWriter, r *http.Request) {
 	log.Printf("IAP: Using dev mode verification for user %d, product %s", userID, req.ProductID)
 
 	switch req.ProductID {
-	case "checkst.pro.semester":
+	case "checkst.pro.semester", "checkst.pro.semester.sub":
 		expiresAt = time.Now().AddDate(0, 6, 0) // 6 months
 		status = "pro"
 	case "checkst.pro.lifetime":
