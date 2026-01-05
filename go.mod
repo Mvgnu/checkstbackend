@@ -1,6 +1,6 @@
 module github.com/magnusohle/openanki-backend
 
-go 1.23
+go 1.22
 
 require (
 	github.com/getkin/kin-openapi v0.133.0
