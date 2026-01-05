@@ -10,9 +10,15 @@ import (
     "github.com/magnusohle/openanki-backend/internal/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+    // Load .env file (if present) to populate R2/AppStore keys
+    if err := godotenv.Load(); err != nil {
+        log.Println("ℹ️ No .env file loaded via godotenv (systemd vars will be used if set)")
+    }
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
