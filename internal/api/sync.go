@@ -437,6 +437,7 @@ func (h *SyncHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
     }
 
     // Legacy Local Filesystem Fallback
+    log.Println("⚠️ Falling back to legacy upload (S3 not configured or skipped)")
 	err := r.ParseMultipartForm(50 << 20) // 50MB limit
 	if err != nil {
 		http.Error(w, "File too large", http.StatusBadRequest)

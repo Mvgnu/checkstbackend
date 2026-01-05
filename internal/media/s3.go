@@ -26,9 +26,11 @@ func InitS3() (*S3Service, error) {
 	bucketName := os.Getenv("R2_BUCKET_NAME")
 
 	if accountId == "" || accessKeyId == "" || accessKeySecret == "" || bucketName == "" {
-		log.Println("R2/S3 configuration missing. Media sync will be disabled or local-only.")
+		log.Printf("❌ R2 Config Missing: AccountID=%v, KeyID=%v, Secret=%v, Bucket=%v", 
+            accountId != "", accessKeyId != "", accessKeySecret != "", bucketName != "")
 		return &S3Service{IsConfigured: false}, nil
 	}
+    log.Println("✅ R2/S3 Configured Successfully")
 
 	r2Resolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 		return aws.Endpoint{
