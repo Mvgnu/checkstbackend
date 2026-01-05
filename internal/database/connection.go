@@ -90,10 +90,7 @@ func applySchema() error {
 // For now, let's keep it simple. Assuming main.go handles the path correctly relative to cwd.
 // But wait, schema.sql reading was in sync.go's InitSyncSchema. 
 // I should move ReadSchemaFile or similar helper here if needed, or just inline it.
-func ReadSchemaFile(path string) ([]byte, error) {
-    // This is a placeholder. Real implementation should read standard file.
-    // In previous code (sync.go), os.ReadFile was used.
-    // We will use os.ReadFile in applySchema actually.
+
 const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 func generateRandomCode(length int) string {
