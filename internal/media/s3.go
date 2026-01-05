@@ -32,7 +32,7 @@ func InitS3() (*S3Service, error) {
 
 	r2Resolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 		return aws.Endpoint{
-			URL: "https://" + accountId + ".r2.cloudflarestorage.com",
+			URL: "https://" + accountId + ".eu.r2.cloudflarestorage.com",
 		}, nil
 	})
 
