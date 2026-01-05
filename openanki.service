@@ -14,7 +14,9 @@ StandardOutput=journal
 StandardError=journal
 
 # Environment
+# Environment
 Environment=PORT=8080
+EnvironmentFile=/home/ploi/checkst.app/checkstbackend/.env
 
 # Security hardening
 NoNewPrivileges=true
