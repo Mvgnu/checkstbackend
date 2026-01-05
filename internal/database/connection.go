@@ -3,7 +3,9 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 	
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -39,6 +41,31 @@ func InitDB(dataSourceName string) (*Repository, error) {
         return nil, err
     }
     
+    // Auto-Migrate: Add invite_code if missing
+    // We ignore error because if it exists, it fails safely (usually)
+    // Or we verify if column exists.
+    DB.Exec(`ALTER TABLE groups ADD COLUMN invite_code TEXT UNIQUE`)
+    DB.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_groups_invite_code ON groups(invite_code)`)
+    
+    // Backfill empty invite codes
+    // We need to do this for any group that has NULL invite_code
+    rows, _ := DB.Query("SELECT id FROM groups WHERE invite_code IS NULL OR invite_code = ''")
+    if rows != nil {
+        var ids []int
+        for rows.Next() {
+            var id int
+            if err := rows.Scan(&id); err == nil {
+                ids = append(ids, id)
+            }
+        }
+        rows.Close()
+        
+        for _, id := range ids {
+            code := generateRandomCode(8)
+            DB.Exec("UPDATE groups SET invite_code = ? WHERE id = ?", code, id)
+        }
+    }
+    
 	return &Repository{
         DB: DB,
         Q:  Q,
@@ -67,5 +94,13 @@ func ReadSchemaFile(path string) ([]byte, error) {
     // This is a placeholder. Real implementation should read standard file.
     // In previous code (sync.go), os.ReadFile was used.
     // We will use os.ReadFile in applySchema actually.
-    return nil, nil // Not used if I inline
+const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+
+func generateRandomCode(length int) string {
+    seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+    b := make([]byte, length)
+    for i := range b {
+        b[i] = charset[seededRand.Intn(len(charset))]
+    }
+    return string(b)
 }

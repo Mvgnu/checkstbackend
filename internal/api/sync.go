@@ -11,17 +11,19 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/magnusohle/openanki-backend/internal/auth"
 	"github.com/magnusohle/openanki-backend/internal/database"
+    "github.com/magnusohle/openanki-backend/internal/media"
 )
 
 type SyncHandler struct{
     Repo *database.Repository
+    S3   *media.S3Service
 }
 
 // Ensure SyncHandler implements ServerInterface
 var _ ServerInterface = (*SyncHandler)(nil)
 
-func RegisterSyncRoutes(r chi.Router, repo *database.Repository) {
-	handler := &SyncHandler{Repo: repo}
+func RegisterSyncRoutes(r chi.Router, repo *database.Repository, s3Service *media.S3Service) {
+	handler := &SyncHandler{Repo: repo, S3: s3Service}
     
     r.Group(func(r chi.Router) {
         r.Use(auth.Middleware)
@@ -368,10 +370,77 @@ func (h *SyncHandler) ListMedia(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(MediaListResponse{Media: &media})
 }
 
-// UploadMedia handles media file uploads
-func (h *SyncHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id").(int)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(MediaListResponse{Media: &media})
+}
 
+// UploadMedia handles media file uploads - returns Presigned URL for R2/S3
+func (h *SyncHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
+    userID := r.Context().Value("user_id").(int)
+    
+    // Check if using S3/R2
+    if h.S3 != nil && h.S3.IsConfigured {
+        // Parse JSON request: { "hash": "...", "filename": "...", "size": ... }
+        var req struct {
+            Hash     string `json:"hash"`
+            Filename string `json:"filename"`
+            Size     int64  `json:"size"`
+        }
+        
+        // Try to decode JSON, if fails, might be old Multipart form (fallback?)
+        // The user specifically wants presigned flow. I will prioritize that.
+        // But for "UploadMedia" name, maybe I should check Content-Type or implement a new route?
+        // Let's assume the frontend will send JSON to this endpoint now.
+        
+        if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+            // Fallback to old behavior if JSON decode fails? 
+            // Or maybe check if it's multipart?
+            // "Don't proxy... kills performance." -> I should enforce presigned.
+            http.Error(w, "Invalid JSON or Multipart not supported (use R2)", http.StatusBadRequest)
+            return
+        }
+        
+        if req.Hash == "" {
+             http.Error(w, "Hash required", http.StatusBadRequest)
+             return
+        }
+
+        // Generate Presigned PUT URL
+        // Key format: userID/hash (or just hash if globally unique? typically hash is content addressable)
+        // But user might want folders. `data/media/userID/hash` matches old structure.
+        key := strconv.Itoa(userID) + "/" + req.Hash
+        
+        // Determine content type (optional, S3 puts default to octet-stream)
+        // We can just use generic binary.
+        url, err := h.S3.GetPresignedPutURL(key, "application/octet-stream")
+        if err != nil {
+            http.Error(w, "Failed to generate upload URL", http.StatusInternalServerError)
+            return
+        }
+        
+        // Optimistically record in DB or wait for confirmation?
+        // User flow: "App requests signed URL -> Backend generates it -> App uploads"
+        // Missing step: "App tells Backend it finished".
+        // If I record it now, and upload fails, I have a broken link.
+        // But if I don't record it, I don't know it exists.
+        // I will return the URL. The client should probably call a "Confirm" endpoint.
+        // OR I can just Insert user_media now.
+        
+        usn, _ := h.Repo.IncrementUSN(userID)
+        h.Repo.DB.Exec(`
+            INSERT OR REPLACE INTO user_media (user_id, filename, hash, size, usn)
+            VALUES (?, ?, ?, ?, ?)
+        `, userID, req.Filename, req.Hash, req.Size, usn)
+        
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(map[string]string{
+            "upload_url": url,
+            "hash": req.Hash,
+        })
+        return
+    }
+
+    // Legacy Local Filesystem Fallback
 	err := r.ParseMultipartForm(50 << 20) // 50MB limit
 	if err != nil {
 		http.Error(w, "File too large", http.StatusBadRequest)
@@ -420,8 +489,22 @@ func (h *SyncHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 // DownloadMedia serves a media file by hash
 func (h *SyncHandler) DownloadMedia(w http.ResponseWriter, r *http.Request, hash string) {
 	userID := r.Context().Value("user_id").(int)
-    // hash passed as argument
+    
+    // Check if using S3/R2
+    if h.S3 != nil && h.S3.IsConfigured {
+        key := strconv.Itoa(userID) + "/" + hash
+        url, err := h.S3.GetPresignedGetURL(key)
+        if err != nil {
+             http.Error(w, "Failed to get download URL", http.StatusInternalServerError)
+             return
+        }
+        
+        // Redirect to R2
+        http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+        return
+    }
 
+	// Legacy Local Filesystem Fallback
 	filePath := filepath.Join("./data/media", strconv.Itoa(userID), hash)
 
 	file, err := os.Open(filePath)

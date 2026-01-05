@@ -19,6 +19,7 @@ func RegisterGroupsRoutes(r chi.Router) {
         r.Post("/", handler.CreateGroup)
         r.Get("/", handler.ListGroups)
         r.Post("/{id}/join", handler.JoinGroup)
+        r.Post("/join", handler.JoinWithCode) // New endpoint for code-based join
         // Deck sharing
         r.Post("/{id}/decks", handler.UploadDeck)
         r.Get("/{id}/decks", handler.ListGroupDecks)
@@ -99,6 +100,32 @@ func (h *GroupsHandler) JoinGroup(w http.ResponseWriter, r *http.Request) {
 
     w.WriteHeader(http.StatusOK)
     w.Write([]byte(`{"status":"joined"}`))
+}
+
+func (h *GroupsHandler) JoinWithCode(w http.ResponseWriter, r *http.Request) {
+    userID := r.Context().Value("user_id").(int)
+    
+    var req struct {
+        Code string `json:"code"`
+    }
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+         http.Error(w, "Invalid request", http.StatusBadRequest)
+         return
+    }
+    
+    if req.Code == "" {
+        http.Error(w, "Code required", http.StatusBadRequest)
+        return
+    }
+    
+    group, err := database.JoinGroupByCode(req.Code, userID)
+    if err != nil {
+        http.Error(w, "Failed to join group (invalid code or error)", http.StatusBadRequest)
+        return
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(group)
 }
 
 // UploadDeck - share a deck to the group

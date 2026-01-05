@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "J3SBTA8V9A.com.openanki.openAnki",
+        "paths": [ "/join/*", "/auth/*" ]
+      }
+    ]
+  }
+}
