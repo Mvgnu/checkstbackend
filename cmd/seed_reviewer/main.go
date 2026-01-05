@@ -4,9 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
-	"log"
-
 	"github.com/joho/godotenv"
 	"github.com/magnusohle/openanki-backend/internal/database"
 )
@@ -23,7 +20,13 @@ func main() {
 	}
 
 	// 2. Init DB
-	if err := database.InitDB(); err != nil {
+    // Use the default path or from env
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./openanki.db"
+	}
+
+	if _, err := database.InitDB(dbPath); err != nil {
 		log.Fatalf("Failed to init DB: %v", err)
 	}
 
