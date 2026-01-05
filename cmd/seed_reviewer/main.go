@@ -4,6 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"log"
+	"os"
+
 	"github.com/joho/godotenv"
 	"github.com/magnusohle/openanki-backend/internal/database"
 )
