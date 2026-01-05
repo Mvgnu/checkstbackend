@@ -23,15 +23,47 @@ func main() {
 	}
 
 	// 2. Init DB
-    // Use the default path or from env
+    // Use proper path for Ploi/Production default or env
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = "./openanki.db"
+        // Fallback: Check if we are on server (home/ploi)
+        home, _ := os.UserHomeDir()
+        prodPath := home + "/.checkst/openanki.db"
+        if _, err := os.Stat(prodPath); err == nil {
+            dbPath = prodPath
+            log.Printf("📂 Found production DB at: %s", dbPath)
+        } else {
+		    dbPath = "./openanki.db"
+            log.Printf("⚠️ Using local DB file: %s (Not found: %s)", dbPath, prodPath)
+        }
 	}
 
-	if _, err := database.InitDB(dbPath); err != nil {
+	repo, err := database.InitDB(dbPath)
+    if err != nil {
 		log.Fatalf("Failed to init DB: %v", err)
 	}
+
+    // FORCE MIGRATION Check
+    // Check if column exists, if not, panic with info
+    log.Println("🔍 Verifying Schema...")
+    var check string
+    // Try to select the column. If it fails, add it.
+    err = database.DB.QueryRow("SELECT invite_code FROM groups LIMIT 1").Scan(&check)
+    if err != nil {
+        log.Printf("⚠️ Column invite_code check failed (expected if empty table or missing col): %v. Attempting explicit migration...", err)
+        _, err = database.DB.Exec(`ALTER TABLE groups ADD COLUMN invite_code TEXT UNIQUE`)
+        if err != nil {
+             log.Printf("ℹ️ Migration result: %v (Ignore if 'duplicate column')", err)
+        } else {
+             log.Println("✅ Applied 'invite_code' migration manually!")
+        }
+    } else {
+        log.Println("✅ Schema check: 'invite_code' column exists.")
+    }
+
+    // Ensure backfill logic from InitDB runs (by side effect of re-creating groups)
+    // But repo.InitDB already does it.
+    // Proceed.
 
 	email := "appreview@checkst.app"
 	password := "AppleReview123!"
