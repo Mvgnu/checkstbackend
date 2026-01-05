@@ -370,10 +370,6 @@ func (h *SyncHandler) ListMedia(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(MediaListResponse{Media: &media})
 }
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(MediaListResponse{Media: &media})
-}
-
 // UploadMedia handles media file uploads - returns Presigned URL for R2/S3
 func (h *SyncHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
     userID := r.Context().Value("user_id").(int)
