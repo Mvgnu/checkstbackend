@@ -51,11 +51,19 @@ func main() {
     err = database.DB.QueryRow("SELECT invite_code FROM groups LIMIT 1").Scan(&check)
     if err != nil {
         log.Printf("⚠️ Column invite_code check failed (expected if empty table or missing col): %v. Attempting explicit migration...", err)
-        _, err = database.DB.Exec(`ALTER TABLE groups ADD COLUMN invite_code TEXT UNIQUE`)
+        // SQLite limitation: Cannot add UNIQUE column directly
+        _, err = database.DB.Exec(`ALTER TABLE groups ADD COLUMN invite_code TEXT`)
         if err != nil {
-             log.Printf("ℹ️ Migration result: %v (Ignore if 'duplicate column')", err)
+             log.Printf("ℹ️ Add Column result: %v", err)
         } else {
-             log.Println("✅ Applied 'invite_code' migration manually!")
+             log.Println("✅ Added 'invite_code' column.")
+             // Add Unique Index
+             _, err = database.DB.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_groups_invite_code ON groups(invite_code)`)
+             if err != nil {
+                 log.Printf("⚠️ Failed to create unique index: %v", err)
+             } else {
+                 log.Println("✅ Created unique index on 'invite_code'")
+             }
         }
     } else {
         log.Println("✅ Schema check: 'invite_code' column exists.")
