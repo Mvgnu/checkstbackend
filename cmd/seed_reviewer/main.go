@@ -38,7 +38,7 @@ func main() {
         }
 	}
 
-	repo, err := database.InitDB(dbPath)
+	_, err = database.InitDB(dbPath)
     if err != nil {
 		log.Fatalf("Failed to init DB: %v", err)
 	}
