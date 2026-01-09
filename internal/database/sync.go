@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+    "log"
 	"os"
 	"time"
 )
@@ -216,8 +217,30 @@ func (r *Repository) InitSyncSchema() error {
 
 	// Manual Migration for FSRS columns (idempotent-ish)
 	// We ignore "duplicate column" errors
-	r.DB.Exec(`ALTER TABLE user_cards ADD COLUMN stability REAL DEFAULT 0`)
-	r.DB.Exec(`ALTER TABLE user_cards ADD COLUMN difficulty REAL DEFAULT 0`)
+	if _, err := r.DB.Exec(`ALTER TABLE user_cards ADD COLUMN stability REAL DEFAULT 0`); err != nil {
+        // Only log if it's NOT a duplicate column error (which contains "duplicate column name")
+        // But for debugging now, let's log everything
+        // log.Printf("Migration stability: %v", err)
+    }
+	if _, err := r.DB.Exec(`ALTER TABLE user_cards ADD COLUMN difficulty REAL DEFAULT 0`); err != nil {
+        // log.Printf("Migration difficulty: %v", err)
+    }
+    
+    // Explicitly verify columns exist
+    rows, err := r.DB.Query("PRAGMA table_info(user_cards)")
+    if err == nil {
+        defer rows.Close()
+        var cid int
+        var name, ctype string
+        var notnull, pk int
+        var dfltValue interface{}
+        found := false
+        for rows.Next() {
+            rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk)
+            if name == "stability" { found = true }
+        }
+        log.Printf("🔍 Schema Check: user_cards has stability? %v", found)
+    }
 
 	return nil
 }

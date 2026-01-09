@@ -222,6 +222,7 @@ func (h *SyncHandler) PullSync(w http.ResponseWriter, r *http.Request, params Pu
 
 	dbCards, err := h.Repo.GetCardsSince(userID, since)
 	if err != nil {
+        log.Printf("❌ Error PullSync GetCardsSince: %v", err)
 		http.Error(w, "Failed to get cards", http.StatusInternalServerError)
 		return
 	}
