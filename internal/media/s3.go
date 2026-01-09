@@ -19,7 +19,7 @@ type S3Service struct {
 	IsConfigured  bool
 }
 
-func InitS3() (*S3Service, error) {
+func NewS3Service() (*S3Service, error) {
 	accountId := os.Getenv("R2_ACCOUNT_ID")
 	accessKeyId := os.Getenv("R2_ACCESS_KEY_ID")
 	accessKeySecret := os.Getenv("R2_SECRET_ACCESS_KEY")
@@ -58,7 +58,7 @@ func InitS3() (*S3Service, error) {
 	}, nil
 }
 
-func (s *S3Service) GetPresignedPutURL(key string, contentType string) (string, error) {
+func (s *S3Service) GeneratePresignedPutURL(key string, contentType string, expiry time.Duration) (string, error) {
 	if !s.IsConfigured {
 		return "", nil // Or error
 	}
@@ -67,7 +67,7 @@ func (s *S3Service) GetPresignedPutURL(key string, contentType string) (string, 
 		Bucket:      aws.String(s.Bucket),
 		Key:         aws.String(key),
 		ContentType: aws.String(contentType),
-	}, s3.WithPresignExpires(15*time.Minute))
+	}, s3.WithPresignExpires(expiry))
 
 	if err != nil {
 		return "", err
@@ -76,7 +76,7 @@ func (s *S3Service) GetPresignedPutURL(key string, contentType string) (string, 
 	return req.URL, nil
 }
 
-func (s *S3Service) GetPresignedGetURL(key string) (string, error) {
+func (s *S3Service) GeneratePresignedGetURL(key string, expiry time.Duration) (string, error) {
 	if !s.IsConfigured {
 		return "", nil
 	}

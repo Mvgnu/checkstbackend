@@ -41,7 +41,7 @@ func main() {
     }
 
     // Initialize S3/R2 for media uploads
-    s3Service, err := media.InitS3()
+    s3Service, err := media.NewS3Service()
     if err != nil {
         log.Printf("Warning: S3/R2 not configured: %v", err)
     }

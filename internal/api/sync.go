@@ -3,11 +3,12 @@ package api
 import (
 	"encoding/json"
 	"io"
-    "log"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+    "time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/magnusohle/openanki-backend/internal/auth"
@@ -409,7 +410,7 @@ func (h *SyncHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
         
         // Determine content type (optional, S3 puts default to octet-stream)
         // We can just use generic binary.
-        url, err := h.S3.GetPresignedPutURL(key, "application/octet-stream")
+        url, err := h.S3.GeneratePresignedPutURL(key, "application/octet-stream", 15*time.Minute)
         if err != nil {
             http.Error(w, "Failed to generate upload URL", http.StatusInternalServerError)
             return
@@ -491,7 +492,7 @@ func (h *SyncHandler) DownloadMedia(w http.ResponseWriter, r *http.Request, hash
     // Check if using S3/R2
     if h.S3 != nil && h.S3.IsConfigured {
         key := strconv.Itoa(userID) + "/" + hash
-        url, err := h.S3.GetPresignedGetURL(key)
+        url, err := h.S3.GeneratePresignedGetURL(key, 60*time.Minute)
         if err != nil {
              http.Error(w, "Failed to get download URL", http.StatusInternalServerError)
              return

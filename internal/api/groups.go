@@ -4,10 +4,12 @@ import (
     "encoding/json"
     "net/http"
     "strconv"
+    "time"
 
     "github.com/go-chi/chi/v5"
     "github.com/magnusohle/openanki-backend/internal/auth"
     "github.com/magnusohle/openanki-backend/internal/database"
+    "github.com/magnusohle/openanki-backend/internal/media"
 )
 
 type GroupsHandler struct{}
@@ -174,7 +176,7 @@ func (h *GroupsHandler) UploadDeck(w http.ResponseWriter, r *http.Request) {
         return
     }
     
-    uploadURL, err := s3Service.GeneratePresignedPutURL(r2Key, "application/octet-stream", 15*60) // 15 min expiry
+    uploadURL, err := s3Service.GeneratePresignedPutURL(r2Key, "application/octet-stream", 15*time.Minute) // 15 min expiry
     if err != nil {
         http.Error(w, "Failed to generate upload URL", http.StatusInternalServerError)
         return
@@ -249,7 +251,7 @@ func (h *GroupsHandler) DownloadDeck(w http.ResponseWriter, r *http.Request) {
         return
     }
     
-    downloadURL, err := s3Service.GeneratePresignedGetURL(deck.R2Key, 60*60) // 1 hour expiry
+    downloadURL, err := s3Service.GeneratePresignedGetURL(deck.R2Key, 1*time.Hour) // 1 hour expiry
     if err != nil {
         http.Error(w, "Failed to generate download URL", http.StatusInternalServerError)
         return
