@@ -109,7 +109,8 @@ func (q *Queries) DeleteUserNotes(ctx context.Context, userID int64) error {
 
 const getCardsSince = `-- name: GetCardsSince :many
 SELECT id, note_id, deck_id, ordinal, modified_at, usn, state, queue, due, 
-    interval, ease_factor, reps, lapses, left_count, original_due, original_deck_id, flags, data
+    interval, ease_factor, reps, lapses, left_count, original_due, original_deck_id, flags, data,
+    stability, difficulty
 FROM user_cards
 WHERE user_id = ? AND usn > ?
 ORDER BY usn
