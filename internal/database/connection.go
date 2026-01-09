@@ -64,6 +64,8 @@ func InitDB(dataSourceName string) (*Repository, error) {
             code := generateRandomCode(8)
             DB.Exec("UPDATE groups SET invite_code = ? WHERE id = ?", code, id)
         }
+    }
+
     // Create password_resets table if not exists
     DB.Exec(`CREATE TABLE IF NOT EXISTS password_resets (
         email TEXT NOT NULL PRIMARY KEY,
