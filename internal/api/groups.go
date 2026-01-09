@@ -51,6 +51,7 @@ func (h *GroupsHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 
     group, err := database.CreateGroup(req.Name, req.Description, req.University, req.Degree, userID)
     if err != nil {
+        log.Printf("❌ CreateGroup Error: %v (Request: %+v)", err, req)
         http.Error(w, "Failed to create group", http.StatusInternalServerError)
         return
     }

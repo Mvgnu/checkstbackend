@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS groups (
     university TEXT, -- Optional: limit group to a uni
     degree TEXT,    -- Optional: limit group to a degree
     creator_id INTEGER NOT NULL,
+    invite_code TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(creator_id) REFERENCES users(id)
 );
