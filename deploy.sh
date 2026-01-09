@@ -18,13 +18,13 @@ cd "$APP_DIR"
 
 # Pull latest changes
 echo "[1/4] Pulling latest changes..."
-if [ -d ".git" ]; then
-    git fetch origin "$BRANCH"
-    git reset --hard "origin/$BRANCH"
-else
-    echo "Cloning repository..."
-    git clone "$REPO_URL" .
-fi
+#if [ -d ".git" ]; then
+#    git fetch origin "$BRANCH"
+#    git reset --hard "origin/$BRANCH"
+#else
+#    echo "Cloning repository..."
+#    git clone "$REPO_URL" .
+#fi
 
 # Build the server
 echo "[2/4] Building server..."

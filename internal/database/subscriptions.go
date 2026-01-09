@@ -16,13 +16,33 @@ type Subscription struct {
 }
 
 // SaveSubscription creates or updates a subscription record
+// Enforces 1-subscription-per-user policy: Transfers ownership if transaction ID already exists for another user.
 func SaveSubscription(userID int, productID, transactionID string, expiresAt time.Time) error {
 	// Check if subscription already exists for this transaction
 	var existingID int
-	err := DB.QueryRow(`SELECT id FROM subscriptions WHERE transaction_id = ?`, transactionID).Scan(&existingID)
+	var existingUserID int
+	err := DB.QueryRow(`SELECT id, user_id FROM subscriptions WHERE transaction_id = ?`, transactionID).Scan(&existingID, &existingUserID)
 	
 	if err == nil {
-		// Update existing
+		// Subscription exists. Check ownership.
+		if existingUserID != userID {
+			// OWNERSHIP TRANSFER DETECTED
+			// 1. Downgrade previous owner
+			_, err = DB.Exec(`UPDATE users SET subscription_status = 'free' WHERE id = ?`, existingUserID)
+			if err != nil {
+				return err
+			}
+			
+			// 2. Transfer subscription to new user
+			_, err = DB.Exec(`
+				UPDATE subscriptions 
+				SET user_id = ?, expires_at = ?, is_active = 1 
+				WHERE id = ?
+			`, userID, expiresAt, existingID)
+			return err
+		}
+
+		// Same owner - just update expiry
 		_, err = DB.Exec(`
 			UPDATE subscriptions 
 			SET expires_at = ?, is_active = 1 

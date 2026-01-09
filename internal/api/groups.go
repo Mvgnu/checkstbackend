@@ -128,7 +128,7 @@ func (h *GroupsHandler) JoinWithCode(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(group)
 }
 
-// UploadDeck - share a deck to the group
+// UploadDeck - share a deck to the group (Step 1: Get Presigned URL)
 func (h *GroupsHandler) UploadDeck(w http.ResponseWriter, r *http.Request) {
     userID := r.Context().Value("user_id").(int)
     groupIDStr := chi.URLParam(r, "id")
@@ -155,21 +155,49 @@ func (h *GroupsHandler) UploadDeck(w http.ResponseWriter, r *http.Request) {
     var req struct {
         Name      string `json:"name"`
         CardCount int    `json:"card_count"`
-        DeckData  string `json:"deck_data"` // JSON blob of deck content
+        // DeckData removed - client uploads directly to R2
     }
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
         http.Error(w, "Invalid request", http.StatusBadRequest)
         return
     }
     
-    deck, err := database.CreateGroupDeck(groupID, userID, req.Name, req.CardCount, req.DeckData)
+    // Generate unique R2 key
+    // Format: groups/{groupID}/decks/{uuid}.apkg
+    uuid := database.GenerateRandomString(12) // Reusing existing helper or just simple random
+    r2Key := "groups/" + strconv.Itoa(groupID) + "/decks/" + uuid + ".apkg"
+    
+    // Generate Presigned PUT URL
+    s3Service, err := media.NewS3Service()
     if err != nil {
-        http.Error(w, "Failed to upload deck", http.StatusInternalServerError)
+        http.Error(w, "Storage unavailable", http.StatusInternalServerError)
         return
     }
     
+    uploadURL, err := s3Service.GeneratePresignedPutURL(r2Key, "application/octet-stream", 15*60) // 15 min expiry
+    if err != nil {
+        http.Error(w, "Failed to generate upload URL", http.StatusInternalServerError)
+        return
+    }
+    
+    // Create DB Record (optimistic creation, or we could do it after - but optimisitc is simpler for client flow)
+    deck, err := database.CreateGroupDeck(groupID, userID, req.Name, req.CardCount, r2Key)
+    if err != nil {
+        http.Error(w, "Failed to create deck record", http.StatusInternalServerError)
+        return
+    }
+    
+    // Return URL + Deck Info
+    resp := struct {
+        UploadURL string              `json:"upload_url"`
+        Deck      *database.GroupDeck `json:"deck"`
+    }{
+        UploadURL: uploadURL,
+        Deck:      deck,
+    }
+    
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(deck)
+    json.NewEncoder(w).Encode(resp)
 }
 
 // ListGroupDecks - get all shared decks in a group
@@ -194,7 +222,7 @@ func (h *GroupsHandler) ListGroupDecks(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(decks)
 }
 
-// DownloadDeck - get a specific deck's content
+// DownloadDeck - get download URL for a deck
 func (h *GroupsHandler) DownloadDeck(w http.ResponseWriter, r *http.Request) {
     userID := r.Context().Value("user_id").(int)
     groupIDStr := chi.URLParam(r, "id")
@@ -213,7 +241,31 @@ func (h *GroupsHandler) DownloadDeck(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Deck not found", http.StatusNotFound)
         return
     }
+
+    // Generate Presigned GET URL
+    s3Service, err := media.NewS3Service()
+    if err != nil {
+        http.Error(w, "Storage unavailable", http.StatusInternalServerError)
+        return
+    }
+    
+    downloadURL, err := s3Service.GeneratePresignedGetURL(deck.R2Key, 60*60) // 1 hour expiry
+    if err != nil {
+        http.Error(w, "Failed to generate download URL", http.StatusInternalServerError)
+        return
+    }
+    
+    // Return URL
+    resp := struct {
+        DownloadURL string `json:"download_url"`
+        Name        string `json:"name"`
+        CardCount   int    `json:"card_count"`
+    }{
+        DownloadURL: downloadURL,
+        Name:        deck.Name,
+        CardCount:   deck.CardCount,
+    }
     
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(deck)
+    json.NewEncoder(w).Encode(resp)
 }

@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS group_decks (
     uploader_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     card_count INTEGER DEFAULT 0,
-    deck_data TEXT, -- JSON blob of cards/notes
+    card_count INTEGER DEFAULT 0,
+    r2_key TEXT, -- Path to .apkg file in R2
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(group_id) REFERENCES groups(id),
     FOREIGN KEY(uploader_id) REFERENCES users(id)
