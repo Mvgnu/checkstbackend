@@ -67,19 +67,6 @@ func (h *SyncHandler) PushSync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req SyncPushRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
-	}
-    
-    // Convert API types to Database types
-    payload := &database.SyncPayload{}
-    
-    if req.Decks != nil {
-        for _, d := range *req.Decks {
-            payload.Decks = append(payload.Decks, database.SyncDeck{
-                ID:          d.Id,
                 Name:        d.Name,
                 Description: safeString(d.Description),
                 ConfigID:    d.ConfigId,
