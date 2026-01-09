@@ -214,6 +214,11 @@ func (r *Repository) InitSyncSchema() error {
 		return fmt.Errorf("failed to apply sync schema: %w", err)
 	}
 
+	// Manual Migration for FSRS columns (idempotent-ish)
+	// We ignore "duplicate column" errors
+	r.DB.Exec(`ALTER TABLE user_cards ADD COLUMN stability REAL DEFAULT 0`)
+	r.DB.Exec(`ALTER TABLE user_cards ADD COLUMN difficulty REAL DEFAULT 0`)
+
 	return nil
 }
 
